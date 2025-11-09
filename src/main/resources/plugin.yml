@@ -2,7 +2,10 @@ name: PinataQuestCounter
 version: '0.1-b'
 main: dev.Fjc.pinataQuestCounter.PinataQuestCounter
 api-version: '1.21'
-prefix: StackResizer
+prefix: PQC
 load: STARTUP
 authors: [ Fjc ]
-description: Sets the stack size for any item
+description: Starts the pinata after a set of quests
+
+depend:
+  - ODailyQuests
