@@ -1,0 +1,8 @@
+name: PinataQuestCounter
+version: '0.1-b'
+main: dev.Fjc.pinataQuestCounter.PinataQuestCounter
+api-version: '1.21'
+prefix: StackResizer
+load: STARTUP
+authors: [ Fjc ]
+description: Sets the stack size for any item
