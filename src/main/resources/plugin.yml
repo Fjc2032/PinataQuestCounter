@@ -3,7 +3,6 @@ version: '0.1-b'
 main: dev.Fjc.pinataQuestCounter.PinataQuestCounter
 api-version: '1.21'
 prefix: PQC
-load: STARTUP
 authors: [ Fjc ]
 description: Starts the pinata after a set of quests
 
