@@ -8,38 +8,74 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import net.md_5.bungee.api.ChatColor;
 
 public class CounterClass implements Listener {
 
     private final PinataQuestCounter plugin;
-
     private final FileBuilder fileBuilder;
-
-    int amount;
-
-    final int THRESHOLD;
 
     public CounterClass(PinataQuestCounter plugin) {
         this.plugin = plugin;
         this.fileBuilder = plugin.getFileBuilder();
-
-        this.amount = fileBuilder.getQuestsCompleted();
-        THRESHOLD = fileBuilder.getThreshold();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onQuestComplete(QuestCompletedEvent event) {
+        if (event.isCancelled()) return;
+
         Player player = event.getPlayer();
-        if (event.isCancelled()) plugin.getLogger().warning("This event has been canceled.");
-        player.sendMessage("[DEBUG] Quest completed.");
-        fileBuilder.add(1);
+        int current = fileBuilder.incrementCounter();
+        int cap = plugin.getConfig().getInt("settings.quests_cap", 2);
 
-        if (amount >= THRESHOLD) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "pinata spawn spawn");
+        if (current >= cap) {
+            String reachedMsg = plugin.getConfig().getString("messages.spawn");
+            String formSpawnMsg = format(reachedMsg, player, current, cap);
 
-            //Then we set the value back to 0 to start it over again.
-            fileBuilder.setToZero();
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                onlinePlayer.sendMessage(formSpawnMsg);
+            }
+
+            String command = plugin.getConfig().getString("settings.progress_complete_command");
+            command = command.replace("%player%", player.getName());
+            plugin.getLogger().info("[PinataQuestCounter] Running console command: " + command);
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+
+            fileBuilder.resetCounter();
+        } else {
+            String progressMsg = plugin.getConfig().getString("messages.progress");
+            String formProgressMsg = format(progressMsg, player, current, cap);
+
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                onlinePlayer.sendMessage(formProgressMsg);
+            }
         }
     }
 
+    private String format(String msg, Player player, int current, int cap) {
+        if (msg == null) return "";
+
+        msg = msg
+                .replace("%player%", player.getName())
+                .replace("%current%", String.valueOf(current))
+                .replace("%cap%", String.valueOf(cap));
+
+        msg = org.bukkit.ChatColor.translateAlternateColorCodes('&', msg);
+
+        Pattern pattern = Pattern.compile("#[A-Fa-f0-9]{6}");
+        Matcher matcher = pattern.matcher(msg);
+
+        StringBuilder buffer = new StringBuilder();
+        while (matcher.find()) {
+            try {
+                String color = matcher.group();
+                matcher.appendReplacement(buffer, ChatColor.of(color).toString());
+            } catch (IllegalArgumentException ignored) {}
+        }
+        matcher.appendTail(buffer);
+
+        return buffer.toString();
+    }
 }

@@ -1,57 +1,29 @@
 package dev.Fjc.pinataQuestCounter;
 
-import com.ordwen.odailyquests.ODailyQuests;
 import dev.Fjc.pinataQuestCounter.counter.CounterClass;
 import dev.Fjc.pinataQuestCounter.file.FileBuilder;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.IOException;
+public class PinataQuestCounter extends JavaPlugin {
 
-public final class PinataQuestCounter extends JavaPlugin {
-
-    private static PinataQuestCounter plugin;
     private FileBuilder fileBuilder;
 
     @Override
     public void onEnable() {
-        plugin = this;
         saveDefaultConfig();
 
         fileBuilder = new FileBuilder(this);
-        try {
-            fileBuilder.build();
-            fileBuilder.loadDefaults();
-        } catch (IOException e) {
-            getLogger().severe("Failed to build data/config files!");
-            e.printStackTrace();
-        }
+        fileBuilder.build();
 
-        if (getServer().getPluginManager().isPluginEnabled("ODailyQuests")) {
-            ODailyQuests odq = (ODailyQuests) getServer().getPluginManager().getPlugin("ODailyQuests");
-            getLogger().info("[DEBUG] ODailyQuests detected, registering listener...");
-            registerQuestEvent(new CounterClass(this));
+        if (getConfig().getBoolean("isEnabled", true)) {
+            getServer().getPluginManager().registerEvents(new CounterClass(this), this);
+            getLogger().info("PinataQuestCounter enabled and listening for quest completion events!");
         } else {
-            getLogger().warning("[DEBUG] ODailyQuests not found, quest tracking disabled.");
+            getLogger().warning("Plugin disabled in config.yml (isEnabled: false)");
         }
-
-        getLogger().info("PinataQuestCounter enabled successfully!");
-    }
-
-    @Override
-    public void onDisable() {
-        plugin = null;
-    }
-
-    public static PinataQuestCounter getPlugin() {
-        return plugin;
     }
 
     public FileBuilder getFileBuilder() {
         return fileBuilder;
-    }
-
-    public void registerQuestEvent(Listener listener) {
-        this.getServer().getPluginManager().registerEvents(listener, this);
     }
 }
