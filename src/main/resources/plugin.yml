@@ -1,5 +1,5 @@
 name: PinataQuestCounter
-version: '0.1-b'
+version: '${project.version}'
 main: dev.Fjc.pinataQuestCounter.PinataQuestCounter
 api-version: '1.21'
 prefix: PQC
