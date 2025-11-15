@@ -3,6 +3,7 @@ package dev.Fjc.pinataQuestCounter.counter;
 import com.ordwen.odailyquests.api.events.QuestCompletedEvent;
 import dev.Fjc.pinataQuestCounter.PinataQuestCounter;
 import dev.Fjc.pinataQuestCounter.file.FileBuilder;
+import dev.Fjc.pinataQuestCounter.scheduler.TimeManager;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -10,7 +11,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.md_5.bungee.api.ChatColor;
@@ -28,6 +28,7 @@ public class CounterClass implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onQuestComplete(QuestCompletedEvent event) {
         if (event.isCancelled()) return;
+        if (!TimeManager.checkCooldown()) return;
 
         Player player = event.getPlayer();
         int current = fileBuilder.incrementCounter();
@@ -37,12 +38,6 @@ public class CounterClass implements Listener {
             String reachedMsg = plugin.getConfig().getString("messages.spawn");
             String formSpawnMsg = format(reachedMsg, player, current, cap);
 
-            //Try a stream
-            Bukkit.getOnlinePlayers().stream()
-                    .map(obj -> (Player) obj)
-                    .forEach(action -> action.sendMessage(Component.text(formSpawnMsg)));
-
-            //Try component
             Bukkit.getServer().sendMessage(Component.text(formSpawnMsg));
 
             String command = plugin.getConfig().getString("settings.progress_complete_command");
@@ -51,17 +46,13 @@ public class CounterClass implements Listener {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
 
             fileBuilder.resetCounter();
+            TimeManager.reset();
         } else {
             String progressMsg = plugin.getConfig().getString("messages.progress");
             String formProgressMsg = format(progressMsg, player, current, cap);
 
-            //Try a stream
-            Bukkit.getOnlinePlayers().stream()
-                    .map(obj -> (Player) obj)
-                    .forEachOrdered(action -> action.sendMessage(Component.text(formProgressMsg)));
-
-            //Try component
             Bukkit.getServer().sendMessage(Component.text(formProgressMsg));
+            TimeManager.reset();
         }
     }
 
